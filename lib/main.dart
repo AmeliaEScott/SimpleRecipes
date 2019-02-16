@@ -10,8 +10,6 @@ class SimpleRecipes extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var db = Database();
-    var query = db.query();
 
     return new MaterialApp(
       title: 'Simple Recipes',

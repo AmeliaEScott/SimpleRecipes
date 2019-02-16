@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'recipe.dart';
+import 'editrecipe.dart';
 
 class RecipeList extends StatelessWidget {
 
@@ -39,8 +40,16 @@ class _RecipeListElement extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text("Recipe #${_recipe.id}"),
+
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context){
+        return EditRecipe(_recipe);
+      })),
+      child: ListTile(
+        //TODO: Populate with recipe info
+        title: Text(_recipe.name),
+        subtitle: Text(_recipe.description),
+      ),
     );
   }
 
