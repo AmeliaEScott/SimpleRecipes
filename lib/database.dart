@@ -3,7 +3,6 @@ import 'dart:async';
 import 'dart:math';
 
 class Database {
-  Database();
 
   Future<Query> query() async{
     var query = Query();
@@ -14,6 +13,11 @@ class Database {
   Future<List<Recipe>> getRecipes() async {
     await Future.delayed(Duration(milliseconds: 5000));
     return List.generate(100, (index) => Recipe(index));
+  }
+
+  Future<int> getNewID() async {
+    await Future.delayed(Duration(milliseconds: 2000));
+    return Random().nextInt(1000000);
   }
 }
 
