@@ -35,6 +35,116 @@ class _RecipeViewState extends State<RecipeView>{
 
   @override
   Widget build(BuildContext context) {
+
+    List<Widget> children = [
+      Text(
+        _recipe.name,
+        style: TextStyle(fontWeight: FontWeight.bold),
+        textScaleFactor: 2.0,
+      ),
+      Text(
+        _recipe.description
+      ),
+      Divider(),
+      Text(
+        "Ingredients",
+        style: TextStyle(fontWeight: FontWeight.bold),
+        textScaleFactor: 2.0,
+      ),
+    ];
+
+    children.addAll(_recipe.ingredients.map((ingredient){
+      String title;
+      ingredient *= multiple;
+      if(conversion == PopupOptions.metric){
+        title = ingredient.metric.display;
+      }else if(conversion == PopupOptions.imperial){
+        title = ingredient.imperial.display;
+      }else{
+        title = ingredient.display;
+      }
+
+      Widget child = Row(
+        children: <Widget>[
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 5.0),
+              child: Text(
+                title,
+                textAlign: TextAlign.end,
+              ),
+            )
+          ),
+          Expanded(
+            flex: 7,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 5.0),
+              child: Text(
+                ingredient.name,
+                textAlign: TextAlign.start,
+              ),
+            )
+          )
+        ],
+      );
+
+      if(ingredient.comment.isNotEmpty){
+        child = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            child,
+            Row(
+              children: <Widget>[
+                Spacer(flex: 3),
+                Expanded(
+                  flex: 7,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5.0, vertical: 3.0),
+                    child: Text(
+                      ingredient.comment,
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        fontStyle: FontStyle.italic,
+                      ),
+                      textScaleFactor: 0.9,
+                    )
+                  )
+                )
+              ]
+
+            ),
+
+          ],
+        );
+      }
+
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 3.0),
+        child: child,
+      );
+    }));
+
+    children.add(Divider());
+
+    children.add(
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 3.0),
+          child: Text(
+            "Procedure",
+            style: TextStyle(
+                fontWeight: FontWeight.bold
+            ),
+            textScaleFactor: 2.0,
+          ),
+        )
+
+    );
+
+    children.add(
+      Text("This is a demo procedure.\n\nAAAAHHHHH\n\nAnd then you're done!\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nOR ARE YOU??????")
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_recipe.name),
@@ -113,28 +223,9 @@ class _RecipeViewState extends State<RecipeView>{
         ],
       ),
       //TODO: Actually fill this with information
-      body: Column(
-        children: <Widget>[
-          Text("Recipe #${_recipe.id}"),
-          Text("Name: ${_recipe.name}"),
-          Text("Description: ${_recipe.description}"),
-          Text("Number of ingredients: ${_recipe.ingredients.length}"),
-          Expanded(
-            child: ListView(
-              children: _recipe.ingredients.map((ingredient){
-                ingredient *= multiple;
-                if(conversion == PopupOptions.imperial){
-                  ingredient = ingredient.imperial;
-                }else if(conversion == PopupOptions.metric){
-                  ingredient = ingredient.metric;
-                }
-
-                return Text(ingredient.display);
-              }).toList(),
-            )
-          )
-        ],
-      ),
+      body: ListView(
+        children: children,
+      )
     );
   }
 

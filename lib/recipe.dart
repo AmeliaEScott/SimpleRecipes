@@ -1,5 +1,6 @@
 import 'package:sprintf/sprintf.dart';
 import 'package:flutter/foundation.dart';
+import 'util.dart';
 
 class Recipe {
   final int id;
@@ -23,18 +24,6 @@ class Recipe {
       return Ingredient.clone(ingredient);
     }).toList();
   }
-
-  @override
-  bool operator ==(dynamic other){
-    if(other is Recipe){
-      return other.id == id;
-    }else{
-      return false;
-    }
-  }
-
-  @override
-  int get hashCode => id;
 }
 
 class Ingredient {
@@ -207,7 +196,7 @@ class Ingredient {
         result += sprintf("%.2ftsp", [totalCups * 48.0]);
       }
 
-      result += " " + name;
+      //result += " " + name;
 
       debugPrint("Ingredient '$name': $eighthCups qC, $tablespoons tbsp, $teaspoons tsp, $quarterTeaspoons qtsp");
 
@@ -216,7 +205,7 @@ class Ingredient {
       //TODO: Figure out precision better
       //int precision = min(-(log(amount) / log(10)) + 2, 0.0).ceil();
       int precision = 2;
-      return sprintf("%.${precision}f %s %s", [amount, unit, name]);
+      return "${showDecimal(amount)} $unit";
     }
   }
 }
