@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'recipe.dart';
 import 'editrecipe.dart';
 import 'util.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 /// A recipe view handles viewing the details of a single recipe.
 /// This recipe CAN be edited, so if you navigate to this route,
@@ -142,7 +143,17 @@ class _RecipeViewState extends State<RecipeView>{
     );
 
     children.add(
-      Text("This is a demo procedure.\n\nAAAAHHHHH\n\nAnd then you're done!\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nOR ARE YOU??????")
+      MarkdownBody(
+        data: """
+# PART 1
+
+This is some nice markdown!
+
+ 1. First item on list
+ 2. Second item on list
+ 3. *now* we're getting **FANCY**!
+        """
+      )
     );
 
     return Scaffold(

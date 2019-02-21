@@ -29,6 +29,18 @@ class Recipe {
 class Ingredient {
 
   static const double _tol = 0.05;
+  static const List<String> imperialVolume = [
+    "C", "tbsp", "tsp", "fl. Oz", "gal"
+  ];
+  static const List<String> imperialWeight = [
+    "Oz", "lb"
+  ];
+  static const List<String> metricVolume = [
+    "mL", "L"
+  ];
+  static const List<String> metricWeight = [
+    "g", "kg"
+  ];
 
   int order;
   String name;
@@ -56,80 +68,152 @@ class Ingredient {
     return this * (1 / div);
   }
 
-  String get normalizedUnit {
-    return unit.toLowerCase().replaceAll(RegExp(r'\.|s$'), "");
+  bool get isImperial {
+    return imperialVolume.contains(normalizedUnit) || imperialWeight.contains(normalizedUnit);
   }
 
-  Ingredient get metric {
-    Ingredient newIngredient = Ingredient.clone(this);
-    switch(normalizedUnit){
+  bool get isMetric {
+    return metricVolume.contains(normalizedUnit) || metricWeight.contains(normalizedUnit);
+  }
+
+  bool get isVolume {
+    return imperialVolume.contains(normalizedUnit) || metricVolume.contains(normalizedUnit);
+  }
+
+  bool get isWeight {
+    return imperialWeight.contains(normalizedUnit) || metricWeight.contains(normalizedUnit);
+  }
+
+  /// Coerces [unit] to be more predictable. For example, converts "Tablespoons",
+  /// "tablespoon", "tbsp", and "TbSp" all to "tbsp".
+  /// If [unit] corresponds to one of the following, it will be changed:
+  ///  - tsp
+  ///  - tbsp
+  ///  - C
+  ///  - P
+  ///  - fl. Oz
+  ///  - Oz
+  ///  - mL
+  ///  - L
+  ///  - g
+  ///  - kg
+  String get normalizedUnit {
+    switch(unit.toLowerCase().replaceAll(RegExp(r'\.|s$'), "")){
       case "tsp":
       case "teaspoon":
-        newIngredient.amount *= 4.93;
-        newIngredient.unit = "mL";
-        break;
+        return "tsp";
       case "tbsp":
       case "tablespoon":
-        newIngredient.amount *= 14.78;
-        newIngredient.unit = "mL";
-        break;
+        return "tbsp";
       case "c":
       case "cup":
-        newIngredient.amount *= 236.6;
-        newIngredient.unit = "mL";
-        break;
+       return "C";
       case "p":
       case "pint":
-        newIngredient.amount *= 473.2;
-        newIngredient.unit = "mL";
-        break;
+        return "P";
       case "fl oz":
       case "fluid oz":
       case "fl ounce":
       case "fluid ounce":
-        newIngredient.amount *= 29.57;
-        newIngredient.unit = "mL";
-        break;
+        return "fl. Oz";
       case "oz":
       case "ounce":
       case "ounces":
+        return "Oz";
+      case "ml":
+      case "milliliter":
+      case "millilitre":
+        return "mL";
+      case "l":
+      case "liter":
+      case "litre":
+        return "L";
+      case "g":
+      case "gram":
+        return "g";
+      case "kg":
+      case "kilogram":
+        return "kg";
+      default:
+        return unit;
+    }
+  }
+
+  /// Returns a new [Ingredient] object with a new [amount] and [unit], such
+  /// that [unit] is one of "mL", "g", or "kg".
+  Ingredient get metric {
+    Ingredient newIngredient = Ingredient.clone(this);
+    switch(normalizedUnit){
+      case "tsp":
+        newIngredient.amount *= 4.93;
+        newIngredient.unit = "mL";
+        break;
+      case "tbsp":
+        newIngredient.amount *= 14.78;
+        newIngredient.unit = "mL";
+        break;
+      case "C":
+        newIngredient.amount *= 236.6;
+        newIngredient.unit = "mL";
+        break;
+      case "P":
+        newIngredient.amount *= 473.2;
+        newIngredient.unit = "mL";
+        break;
+      case "fl. Oz":
+        newIngredient.amount *= 29.57;
+        newIngredient.unit = "mL";
+        break;
+      case "Oz":
         newIngredient.amount *= 28.35;
         newIngredient.unit = "g";
         break;
+      case "lb":
+        newIngredient.amount *= 0.4536;
+        newIngredient.unit = "kg";
     }
     return newIngredient;
   }
 
+  /// Returns a new [Ingredient] object with a new [amount] and [unit], such
+  /// that [unit] is one of "C", "oz", or "lb".
   Ingredient get imperial {
     Ingredient newIngredient = Ingredient.clone(this);
     switch(normalizedUnit){
-      case "ml":
-      case "milliliter":
-      case "millilitre":
+      case "mL":
         newIngredient.amount /= 236.6;
         newIngredient.unit = "C";
         break;
       case "g":
-      case "gram":
         newIngredient.amount /= 28.35;
         newIngredient.unit = "oz";
+        break;
+      case "kg":
+        newIngredient.amount *= 2.205;
+        newIngredient.unit = "lb";
         break;
     }
     return newIngredient;
   }
 
+  /// Returns a string containing the amount and unit of measurement of this
+  /// ingredient. It will round the amount to look nice, and if the unit is
+  /// not metric, will display it as a nice unicode fraction (if a reasonable
+  /// fraction approximation can be found).
+  ///
+  /// Examples:
+  /// `assert(Ingredient(amount: 0.5, unit: "tbsp").display == "1\u{2044}2")`
+  /// `assert(Ingredient(amount: 0.3333, unit: "ml").display == "0.33")`
+  /// `assert(Ingredient(amount: 101.123, unit: "ml").display == "101")`
   String get display {
-    if (["c", "cup", "tbsp", "tablespoon", "tsp", "teaspoon"].contains(
-        normalizedUnit)) {
+    if (["C", "tbsp", "tsp"].contains(normalizedUnit)) {
       String result = "";
       double totalCups;
       switch (normalizedUnit) {
         case "tsp":
-        case "teaspoon":
           totalCups = amount / 48;
           break;
         case "tbsp":
-        case "tablespoon":
           totalCups = amount / 16;
           break;
         default:
@@ -147,28 +231,8 @@ class Ingredient {
           result += "${eighthCups ~/ 8}";
         }
 
-        switch(eighthCups % 8){
-          case 1:
-            result += "\u{215B}";
-            break;
-          case 2:
-            result += "\u{BC}";
-            break;
-          case 3:
-            result += "\u{215C}";
-            break;
-          case 4:
-            result += "\u{BD}";
-            break;
-          case 5:
-            result += "\u{215D}";
-            break;
-          case 6:
-            result += "\u{BE}";
-            break;
-          case 7:
-            result += "\u{215E}";
-            break;
+        if(eighthCups % 8 > 0){
+          result += " " + showFraction((eighthCups % 8) / 8, binaryDenom: true, unicode: true, maxDenom: 8) + " ";
         }
         result += "C";
       }else if((tablespoons / 16 - totalCups).abs() / totalCups < _tol){
@@ -181,31 +245,20 @@ class Ingredient {
           result += "${quarterTeaspoons ~/ 4}";
         }
 
-        switch(quarterTeaspoons % 4){
-          case 1:
-            result += "\u{BC}";
-            break;
-          case 2:
-            result += "\u{BD}";
-            break;
-          case 3:
-            result += "\u{BE}";
+        if(quarterTeaspoons % 4 > 0){
+          result += " " + showFraction((quarterTeaspoons % 4) / 4, maxDenom: 4, binaryDenom: true, unicode: true) + " ";
         }
         result += "tsp";
       }else{
         result += sprintf("%.2ftsp", [totalCups * 48.0]);
       }
 
-      //result += " " + name;
-
-      debugPrint("Ingredient '$name': $eighthCups qC, $tablespoons tbsp, $teaspoons tsp, $quarterTeaspoons qtsp");
-
       return result;
-    } else {
-      //TODO: Figure out precision better
-      //int precision = min(-(log(amount) / log(10)) + 2, 0.0).ceil();
-      int precision = 2;
+
+    }else if(isMetric){
       return "${showDecimal(amount)} $unit";
+    }else{
+      return "${showFraction(amount, unicode: true)} $unit";
     }
   }
 }
