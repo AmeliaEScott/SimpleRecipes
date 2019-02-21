@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'recipe.dart';
 import 'editrecipe.dart';
+import 'util.dart';
 
 /// A recipe view handles viewing the details of a single recipe.
 /// This recipe CAN be edited, so if you navigate to this route,
@@ -20,9 +21,15 @@ class RecipeView extends StatefulWidget{
   }
 }
 
+enum PopupOptions {
+  metric, imperial, none, multiply, delete
+}
+
 class _RecipeViewState extends State<RecipeView>{
 
   Recipe _recipe;
+  double multiple = 1.0;
+  PopupOptions conversion = PopupOptions.none;
 
   _RecipeViewState(this._recipe);
 
@@ -49,12 +56,59 @@ class _RecipeViewState extends State<RecipeView>{
               });
             },
           ),
-          IconButton(
-            icon: Icon(Icons.delete),
-            onPressed: (){
-              //TODO: Use AlertDialog to ask for confirmation
-              Navigator.pop(context, RecipeResult(Result.deleted, _recipe));
-            },
+          PopupMenuButton<PopupOptions>(
+            onSelected: (option){setState((){
+              switch(option){
+                case PopupOptions.none:
+                  conversion = PopupOptions.none;
+                  break;
+                case PopupOptions.metric:
+                  conversion = PopupOptions.metric;
+                  break;
+                case PopupOptions.imperial:
+                  conversion = PopupOptions.imperial;
+                  break;
+                case PopupOptions.multiply:
+                  showDialog(
+                    context: context,
+                    builder: (context) => _MultiplyDialog(multiple)
+                  ).then((newMultiple){
+                    if(newMultiple != null){
+                      setState(() {
+                        multiple = newMultiple;
+                      });
+                    }
+                  });
+                  break;
+                case PopupOptions.delete:
+                  // TODO: Ask for confirmation with AlertDialog
+                  Navigator.pop(context, RecipeResult(Result.deleted, _recipe));
+              }
+            });},
+            itemBuilder: (context){
+              return <PopupMenuEntry<PopupOptions>>[
+                PopupMenuItem(
+                  value: PopupOptions.none,
+                  child: Text("Disable unit conversion"),
+                ),
+                PopupMenuItem(
+                  value: PopupOptions.metric,
+                  child: Text("Convert to metric"),
+                ),
+                PopupMenuItem(
+                  value: PopupOptions.imperial,
+                  child: Text("Convert to imperial"),
+                ),
+                PopupMenuItem(
+                  value: PopupOptions.multiply,
+                  child: Text("Multiply recipe"),
+                ),
+                PopupMenuItem(
+                  value: PopupOptions.delete,
+                  child: Text("Delete recipe")
+                ),
+              ];
+            }
           )
         ],
       ),
@@ -64,9 +118,72 @@ class _RecipeViewState extends State<RecipeView>{
           Text("Recipe #${_recipe.id}"),
           Text("Name: ${_recipe.name}"),
           Text("Description: ${_recipe.description}"),
-          Text("Number of ingredients: ${_recipe.ingredients.length}")
+          Text("Number of ingredients: ${_recipe.ingredients.length}"),
+          Expanded(
+            child: ListView(
+              children: _recipe.ingredients.map((ingredient){
+                ingredient *= multiple;
+                if(conversion == PopupOptions.imperial){
+                  ingredient = ingredient.imperial;
+                }else if(conversion == PopupOptions.metric){
+                  ingredient = ingredient.metric;
+                }
+
+                return Text(ingredient.display);
+              }).toList(),
+            )
+          )
         ],
       ),
+    );
+  }
+
+}
+
+class _MultiplyDialog extends StatefulWidget{
+
+  final double multiple;
+
+  _MultiplyDialog(this.multiple);
+
+  @override
+  State<StatefulWidget> createState() {
+    return _MultiplyDialogState(multiple);
+  }
+
+}
+
+class _MultiplyDialogState extends State<_MultiplyDialog>{
+  final _formKey = GlobalKey<FormState>();
+  double multiple = 1.0;
+
+  _MultiplyDialogState(this.multiple);
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      contentPadding: EdgeInsets.all(16.0),
+      content: Form(
+        key: _formKey,
+        autovalidate: true,
+        child: TextFormField(
+          initialValue: showFraction(multiple),
+          keyboardType: TextInputType.numberWithOptions(signed: false, decimal: true),
+          validator: (value) => parseFraction(value) == null ? "Not a valid number" : null,
+          onSaved: (value) => multiple = parseFraction(value),
+        ),
+      ),
+      actions: <Widget>[
+        FlatButton(
+          child: Text("Confirm"),
+          onPressed: (){
+            if(_formKey.currentState.validate()){
+              _formKey.currentState.save();
+              Navigator.pop(context, multiple);
+            }
+          },
+        ),
+      ],
     );
   }
 

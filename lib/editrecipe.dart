@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'recipe.dart';
+import 'util.dart';
 
 class EditRecipe extends StatelessWidget {
   final Recipe _recipe;
@@ -222,34 +223,20 @@ class _IngredientView extends StatelessWidget {
               flex: 4,
               child: TextFormField(
                 initialValue:
-                    _ingredient.amount == null ? null : "${_ingredient.amount}",
-                keyboardType: TextInputType.numberWithOptions(),
+                    _ingredient.amount == null ? "" : showFraction(_ingredient.amount),
+                keyboardType: TextInputType.text,
                 decoration: InputDecoration(
                   labelText: "Amount",
                 ),
-                onSaved: (value) => _ingredient.amount = double.tryParse(value),
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return "Required";
-                  } else {
-                    double number = double.tryParse(value);
-                    if (number == null) {
-                      return "Not a number";
-                    } else if (number <= 0) {
-                      return "Must be positive";
-                    } else {
-                      return null;
-                    }
-                  }
-                },
+                onSaved: (value) => _ingredient.amount = parseFraction(value) ?? 0,
+                validator: (value) => parseFraction(value) == null ? "Not a number" : null,
               )),
           Expanded(
             flex: 2,
             child: TextFormField(
               initialValue: _ingredient.unit,
               decoration: InputDecoration(labelText: "Unit"),
-              onSaved: (value) => _ingredient.unit = value,
-              validator: (value) => value.isEmpty ? "Required" : null,
+              onSaved: (value) => _ingredient.unit = value ?? "",
             ),
           ),
         ],
